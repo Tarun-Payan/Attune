@@ -1,0 +1,40 @@
+{
+  "name": "@attune/mobile",
+  "version": "0.1.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@attune/schemas": "workspace:*",
+    "@attune/types": "workspace:*",
+    "@tanstack/react-query": "^5.101.4",
+    "expo": "~54.0.36",
+    "expo-constants": "~18.0.13",
+    "expo-dev-client": "~6.0.21",
+    "expo-linking": "~8.0.12",
+    "expo-notifications": "~0.32.17",
+    "expo-router": "~6.0.24",
+    "expo-secure-store": "~15.0.8",
+    "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "~15.0.11",
+    "lucide-react-native": "^1.31.0",
+    "metro-runtime": "^0.87.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
+    "zod": "^3.24.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.17",
+    "typescript": "~5.9.3"
+  },
+  "scripts": {
+    "start": "expo start --go --localhost",
+    "android": "expo start --android --go --localhost",
+    "ios": "expo start --ios --go",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit"
+  },
+  "private": true
+}

@@ -1,0 +1,12 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
+  unrs-resolver: true
+
+# Expo SDK 54's CLI resolves metro* packages without declaring them —
+# hoist the metro family to the root node_modules so they resolve everywhere.
+publicHoistPattern:
+  - "*metro*"

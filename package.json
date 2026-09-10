@@ -1,0 +1,26 @@
+{
+  "name": "attune",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:mobile": "pnpm --filter @attune/mobile start",
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "db:generate": "pnpm --filter @attune/db db:generate",
+    "db:migrate": "pnpm --filter @attune/db db:migrate",
+    "db:seed": "pnpm --filter @attune/db db:seed",
+    "db:studio": "pnpm --filter @attune/db exec drizzle-kit studio",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.5.0"
+  }
+}

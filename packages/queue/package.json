@@ -1,0 +1,23 @@
+{
+  "name": "@attune/queue",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@attune/schemas": "workspace:*",
+    "@attune/types": "workspace:*",
+    "bullmq": "^5.81.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.10"
+  }
+}

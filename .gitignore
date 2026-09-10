@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+.zcode
+docs
+design
+.agents
+
+AGENTS.md
+docker-compose.yml
+GEMINI.md

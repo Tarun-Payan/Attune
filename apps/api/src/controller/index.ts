@@ -1,0 +1,9 @@
+export * as authController from "./authController";
+export * as feedController from "./feedController";
+export * as itemController from "./itemController";
+export * as userController from "./userController";
+export * as topicController from "./topicController";
+export * as statsController from "./statsController";
+export * as adminController from "./adminController";
+export * as roleController from "./roleController";
+export * as healthController from "./healthController";

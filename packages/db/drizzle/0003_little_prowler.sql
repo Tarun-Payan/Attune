@@ -1,0 +1,1 @@
+ALTER TABLE "notification_logs" ADD COLUMN "error" text;

@@ -1,0 +1,1 @@
+ALTER TABLE "devices" ADD COLUMN "provider" varchar DEFAULT 'fcm' NOT NULL;
