@@ -72,7 +72,7 @@ await app.register(swagger, {
       version: "0.3.0",
       description: "Personalized news & technology-update aggregator — typed backend API",
     },
-    servers: [{ url: `http://localhost:${process.env.API_PORT ?? 3000}` }],
+    servers: [{ url: process.env.APP_URL ?? `http://localhost:${process.env.PORT ?? process.env.API_PORT ?? 3000}` }],
     components: {
       securitySchemes: {
         bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
@@ -112,7 +112,7 @@ await seedSuperAdminRole().catch((err) => {
   app.log.warn({ err }, "Super Admin role bootstrap check failed");
 });
 
-const port = Number(process.env.API_PORT ?? 3000);
+const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3000);
 await app.listen({ port, host: "0.0.0.0" });
 app.log.info(`Attune API listening on :${port} — docs at http://localhost:${port}/docs`);
 

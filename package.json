@@ -7,8 +7,12 @@
     "node": ">=20"
   },
   "scripts": {
+    "build": "turbo run build",
     "dev": "turbo run dev",
     "dev:mobile": "pnpm --filter @attune/mobile start",
+    "start:api": "pnpm --filter @attune/api start",
+    "start:worker": "pnpm --filter @attune/worker start",
+    "start:admin": "pnpm --filter @attune/admin start",
     "infra:up": "docker compose up -d --wait",
     "infra:down": "docker compose down",
     "db:generate": "pnpm --filter @attune/db db:generate",
