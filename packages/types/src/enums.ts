@@ -98,6 +98,7 @@ export const ADMIN_FEATURES = [
   "jobs",
   "roles",
   "cache",
+  "logs",
 ] as const;
 export type AdminFeature = (typeof ADMIN_FEATURES)[number];
 

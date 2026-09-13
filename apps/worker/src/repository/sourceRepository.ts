@@ -4,6 +4,7 @@ import { sources, syncRuns, type Source, type SyncRun } from "@attune/db/schema"
 
 export interface RecordSyncRunInput {
   sourceId: string;
+  jobId?: string | null;
   status: "ok" | "error";
   itemsFound: number;
   itemsNew: number;
@@ -30,6 +31,7 @@ export async function recordSyncRun(data: RecordSyncRunInput): Promise<SyncRun> 
     .insert(syncRuns)
     .values({
       sourceId: data.sourceId,
+      jobId: data.jobId ?? null,
       status: data.status,
       itemsFound: data.itemsFound,
       itemsNew: data.itemsNew,

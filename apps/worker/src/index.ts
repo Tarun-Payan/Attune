@@ -12,7 +12,7 @@ import {
   welcomeEmailProcessor,
 } from "./processors";
 import { registerSchedules } from "./services/schedulerService";
-import { childLogger } from "./lib/logger";
+import { childLogger, createJobLogger, logger } from "./lib/logger";
 
 const log = childLogger({ component: "worker" });
 
@@ -29,10 +29,14 @@ const stats = await registerSchedules();
 
 const ingestWorker = new Worker("ingest", ingestProcessor, { connection, concurrency: 4 });
 ingestWorker.on("completed", (job, result) => {
-  if (job.name === "sync") log.info(result, "sync completed");
+  if (job?.name === "sync") {
+    const jobLog = createJobLogger(logger, job, "ingest");
+    jobLog.info(result, "sync completed");
+  }
 });
 ingestWorker.on("failed", (job, err) => {
-  log.error({ jobId: job?.id, err: err.message }, "ingest job failed");
+  const jobLog = job ? createJobLogger(logger, job, "ingest") : log;
+  jobLog.error({ err }, "ingest job failed");
 });
 
 // ── Queue: pipeline — post-processing (sweeper, notify, welcome, campaign) ─
@@ -41,7 +45,7 @@ const pipelineWorker = new Worker(
   async (job) => {
     switch (job.name) {
       case "categorize-sweep":
-        return categorizeSweepProcessor();
+        return categorizeSweepProcessor(job);
       case "notify-items":
         return notifyItemsProcessor(job);
       case "send-welcome-email":
@@ -49,11 +53,11 @@ const pipelineWorker = new Worker(
       case "campaign":
         return campaignProcessor(job);
       case "summarize":
-        return summarizeProcessor();
+        return summarizeProcessor(job);
       case "cluster":
-        return clusterProcessor();
+        return clusterProcessor(job);
       default:
-        log.warn({ jobName: job.name }, "unknown pipeline job");
+        log.warn({ jobName: job.name, jobId: job.id }, "unknown pipeline job");
         return undefined;
     }
   },
@@ -62,11 +66,13 @@ const pipelineWorker = new Worker(
 pipelineWorker.on("completed", (job, result) => {
   const r = result as { tagged?: number; notified?: number; sent?: number } | undefined;
   if (r && ((r.tagged ?? 0) > 0 || (r.notified ?? 0) > 0 || (r.sent ?? 0) > 0)) {
-    log.info(result, `${job.name} completed`);
+    const jobLog = job ? createJobLogger(logger, job, "pipeline") : log;
+    jobLog.info(result, `${job.name} completed`);
   }
 });
 pipelineWorker.on("failed", (job, err) => {
-  log.error({ jobName: job?.name, jobId: job?.id, err: err.message }, "pipeline job failed");
+  const jobLog = job ? createJobLogger(logger, job, "pipeline") : log;
+  jobLog.error({ err }, "pipeline job failed");
 });
 
 // ── Queue: system — worker ─────────────────────────────────────────────────
@@ -75,10 +81,16 @@ const systemWorker = new Worker(
   async (job) => {
     if (job.name === "heartbeat") {
       log.info("heartbeat (queues: ingest, pipeline, system)");
+      return;
     }
   },
   { connection },
 );
+systemWorker.on("failed", (job, err) => {
+  const jobLog = job ? createJobLogger(logger, job, "system") : log;
+  jobLog.error({ err }, `${job?.name ?? "system"} job failed`);
+});
+
 
 log.info(
   { ...stats, heartbeatMs: HEARTBEAT_MS },

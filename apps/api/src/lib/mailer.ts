@@ -1,4 +1,7 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { createLogger } from "@attune/logger";
+
+const log = createLogger({ service: "api", component: "mailer" });
 
 let transporter: Transporter | null = null;
 
@@ -34,17 +37,17 @@ export async function sendEmail(input: {
       html: input.html,
       text: input.text,
     });
-    console.log(`[MAILER] Sent email to ${input.to} (${input.subject}) - ID: ${info.messageId}`);
+    log.info({ to: input.to, subject: input.subject, messageId: info.messageId }, "Email sent successfully");
     return { ok: true };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    console.warn(`[MAILER WARNING] Failed to send email to ${input.to}: ${error}`);
+    log.warn({ to: input.to, err }, "Failed to send email");
     return { ok: false, error };
   }
 }
 
 export async function sendEmailChangeCode(newEmail: string, code: string, name?: string): Promise<void> {
-  console.log(`[VERIFICATION CODE] Email Change Verification Code for ${newEmail}: ${code}`);
+  log.info({ to: newEmail }, "Email change verification code generated and dispatched");
   const displayName = name ? `Hi ${name},` : "Hello,";
 
   const html = `
@@ -78,7 +81,7 @@ export async function sendEmailChangeCode(newEmail: string, code: string, name?:
 }
 
 export async function sendEmailChangeAlert(oldEmail: string, newEmail: string, name?: string): Promise<void> {
-  console.log(`[SECURITY ALERT] Email Change Security Alert sent to old email: ${oldEmail} (changed to: ${newEmail})`);
+  log.info({ to: oldEmail, newEmail }, "Email change security alert dispatched");
   const displayName = name ? `Hi ${name},` : "Hello,";
 
   const html = `
@@ -111,7 +114,7 @@ export async function sendEmailChangeAlert(oldEmail: string, newEmail: string, n
 }
 
 export async function sendPasswordResetCode(email: string, code: string, name?: string): Promise<void> {
-  console.log(`[VERIFICATION CODE] Password Reset Code for ${email}: ${code}`);
+  log.info({ to: email }, "Password reset code generated and dispatched");
   const displayName = name ? `Hi ${name},` : "Hello,";
 
   const html = `

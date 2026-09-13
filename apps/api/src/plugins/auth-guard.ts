@@ -32,6 +32,7 @@ export async function requireAuth(req: FastifyRequest) {
       id: String(payload.sub),
       role: (payload.role as UserRole) ?? "USER",
     };
+    req.log = req.log.child({ userId: req.user.id });
   } catch {
     throw new UnauthorizedError("Invalid or expired access token");
   }
@@ -74,6 +75,7 @@ export async function requireAdmin(req: FastifyRequest) {
     adminRoleName: roleInfo.role.name,
     permissions: roleInfo.permissions,
   };
+  req.log = req.log.child({ userId: req.user.id });
 }
 
 /** preHandler factory: requires a specific admin permission (feature + action). */

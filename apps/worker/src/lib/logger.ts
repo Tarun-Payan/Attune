@@ -1,11 +1,14 @@
-import pino from "pino";
+import { createLogger, createJobLogger, generateRunId, type Logger } from "@attune/logger";
+import { getRedisClient } from "@attune/cache";
 
-/** Structured logging, consistent with the API's Fastify/pino output. */
-export const logger = pino({
-  level: process.env.LOG_LEVEL ?? "info",
-  base: undefined, // drop pid/hostname noise
+/** Structured worker logging, identified by service=worker */
+export const logger: Logger = createLogger({
+  service: "worker",
+  redisClient: process.env.NODE_ENV !== "test" ? getRedisClient() : undefined,
 });
 
-export function childLogger(bindings: Record<string, unknown>) {
+export function childLogger(bindings: Record<string, unknown>): Logger {
   return logger.child(bindings);
 }
+
+export { createJobLogger, generateRunId };

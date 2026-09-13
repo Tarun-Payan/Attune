@@ -2,8 +2,11 @@ import type {
   AdminAuthResponse,
   AdminDashboardStats,
   AdminItemsResponse,
+  AdminLogEntryDTO,
+  AdminLogsOverviewDTO,
   AdminMeResponse,
   AdminPermission,
+
   AdminRole,
   AdminRoleDetailResponse,
   AdminRolesResponse,
@@ -33,7 +36,9 @@ import type {
 } from "@attune/types";
 import type {
   AdminLoginInput,
+  AdminLogsQueryInput,
   CampaignInput,
+
   ChangePasswordInput,
   ItemPatchInput,
   PatchMeInput,
@@ -324,6 +329,7 @@ export const adminApi = {
 
   sources: {
     list: () => request<SourcesResponse>("/v1/admin/sources"),
+    get: (id: string) => request<{ source: Source }>(`/v1/admin/sources/${id}`),
     create: (input: SourceCreateInput) =>
       request<{ source: Source }>("/v1/admin/sources", {
         method: "POST",
@@ -497,7 +503,30 @@ export const adminApi = {
         body: JSON.stringify(input),
       }),
   },
+  logs: {
+    list: (params?: AdminLogsQueryInput, init?: RequestInit) => {
+      const qs = new URLSearchParams();
+      if (params?.service && params.service !== "all") qs.set("service", params.service);
+      if (params?.level && params.level !== "all") qs.set("level", params.level);
+      if (params?.requestId) qs.set("requestId", params.requestId);
+      if (params?.runId) qs.set("runId", params.runId);
+      if (params?.jobId) qs.set("jobId", String(params.jobId));
+      if (params?.userId) qs.set("userId", params.userId);
+      if (params?.sourceId) qs.set("sourceId", params.sourceId);
+      if (params?.q) qs.set("q", params.q);
+      if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+      if (params?.offset !== undefined) qs.set("offset", String(params.offset));
+      const suffix = qs.toString() ? `?${qs.toString()}` : "";
+      return request<AdminLogsOverviewDTO>(`/v1/admin/logs${suffix}`, init);
+    },
+
+    clear: () =>
+      request<{ cleared: true; deletedCount: number }>("/v1/admin/logs", {
+        method: "DELETE",
+      }),
+  },
 };
+
 
 export const api = adminApi;
 
@@ -524,13 +553,27 @@ export async function getFreshAccessToken(): Promise<string | null> {
 }
 
 /** Bull Board relative proxy URL for same-origin iframe embedding (token-guarded with jobs:read). */
-export async function bullBoardUrl(): Promise<string> {
+export async function bullBoardUrl(subPath = ""): Promise<string> {
   const token = await getFreshAccessToken();
-  return `/admin/queues/${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  const cleanPath = subPath
+    ? subPath.startsWith("/")
+      ? subPath
+      : `/${subPath}`
+    : "/";
+  const tokenQuery = token ? `token=${encodeURIComponent(token)}` : "";
+  const sep = cleanPath.includes("?") ? "&" : "?";
+  return `/admin/queues${cleanPath}${tokenQuery ? `${sep}${tokenQuery}` : ""}`;
 }
 
 /** Bull Board direct external URL for opening in a new tab/window. */
-export async function bullBoardExternalUrl(): Promise<string> {
+export async function bullBoardExternalUrl(subPath = ""): Promise<string> {
   const token = await getFreshAccessToken();
-  return `${API_URL}/admin/queues/${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  const cleanPath = subPath
+    ? subPath.startsWith("/")
+      ? subPath
+      : `/${subPath}`
+    : "/";
+  const tokenQuery = token ? `token=${encodeURIComponent(token)}` : "";
+  const sep = cleanPath.includes("?") ? "&" : "?";
+  return `${API_URL}/admin/queues${cleanPath}${tokenQuery ? `${sep}${tokenQuery}` : ""}`;
 }

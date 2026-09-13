@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Send, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 import type { AdminRole, UserRow } from "@attune/types";
 import { api } from "@/lib/api";
@@ -17,6 +18,7 @@ import {
   PageHeader,
   Pagination,
   Select,
+  Spinner,
   Td,
   Th,
   useColumnVisibility,
@@ -34,15 +36,24 @@ const USER_COLUMNS: ColumnDef[] = [
   { id: "actions", label: "Actions", defaultVisible: true },
 ];
 
-export default function UsersPage() {
+function UsersContent() {
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? searchParams.get("userId") ?? "";
   const { can, user: currentAdmin, loading: permsLoading } = usePermissions();
   const [users, setUsers] = useState<UserRow[] | null>(null);
   const [roles, setRoles] = useState<AdminRole[]>([]);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(urlQuery);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (urlQuery) {
+      setQ(urlQuery);
+      setPage(1);
+    }
+  }, [urlQuery]);
 
   // Role Assignment Modal
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
@@ -322,5 +333,19 @@ export default function UsersPage() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-64 items-center justify-center">
+          <Spinner className="h-8 w-8 text-primary" />
+        </div>
+      }
+    >
+      <UsersContent />
+    </Suspense>
   );
 }

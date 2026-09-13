@@ -40,6 +40,21 @@ export const typeCountPointSchema = z.object({
   count: z.number(),
 });
 
+export const logTopErrorItemSchema = z.object({
+  message: z.string(),
+  count: z.number(),
+  service: z.string(),
+  lastSeen: z.number(),
+});
+
+export const adminLogStatsSummarySchema = z.object({
+  totalErrors: z.number(),
+  totalWarnings: z.number(),
+  totalDebug: z.number(),
+  impactedUsersCount: z.number(),
+  topErrors: z.array(logTopErrorItemSchema).default([]),
+});
+
 export const adminDashboardStatsResponseSchema = z.object({
   usersTotal: z.number(),
   usersNewToday: z.number(),
@@ -55,9 +70,12 @@ export const adminDashboardStatsResponseSchema = z.object({
   itemsBySourceType: z.array(typeCountPointSchema).default([]),
   failingSources: z.array(failingSourceSchema),
   topTopics: z.array(adminTopTopicSchema),
+  logStats: adminLogStatsSummarySchema.optional(),
 });
 
 // ── Inferred Types ─────────────────────────────────────────────────────────
 
 export type ReadingStatsResponseDTO = z.infer<typeof readingStatsResponseSchema>;
 export type AdminDashboardStatsDTO = z.infer<typeof adminDashboardStatsResponseSchema>;
+export type AdminLogStatsSummaryDTO = z.infer<typeof adminLogStatsSummarySchema>;
+export type LogTopErrorItemDTO = z.infer<typeof logTopErrorItemSchema>;

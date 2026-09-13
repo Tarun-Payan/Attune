@@ -155,7 +155,14 @@ export async function revokeAllUserTokens(userId: string) {
 
 export async function listUsers(query: { q?: string; limit: number; offset: number }) {
   const q = query.q?.trim();
-  const whereCondition = q ? or(ilike(users.email, `%${q}%`), ilike(users.name, `%${q}%`)) : undefined;
+  const whereCondition = q
+    ? or(
+        eq(users.id, q),
+        ilike(users.id, `%${q}%`),
+        ilike(users.email, `%${q}%`),
+        ilike(users.name, `%${q}%`),
+      )
+    : undefined;
 
   const [rows, [countRow]] = await Promise.all([
     db
@@ -169,9 +176,9 @@ export async function listUsers(query: { q?: string; limit: number; offset: numb
         timezone: users.timezone,
         disabledAt: users.disabledAt,
         createdAt: users.createdAt,
-        topicCount: sql<number>`(SELECT count(*) FROM user_topics ut WHERE ut.user_id = ${users.id})`,
-        deviceCount: sql<number>`(SELECT count(*) FROM devices d WHERE d.user_id = ${users.id})`,
-        lastActive: sql<string | null>`(SELECT max(it.created_at) FROM interactions it WHERE it.user_id = ${users.id})`,
+        topicCount: sql<number>`(SELECT count(*) FROM user_topics ut WHERE ut.user_id = "users"."id")`,
+        deviceCount: sql<number>`(SELECT count(*) FROM devices d WHERE d.user_id = "users"."id")`,
+        lastActive: sql<string | null>`(SELECT max(it.created_at) FROM interactions it WHERE it.user_id = "users"."id")`,
       })
       .from(users)
       .leftJoin(adminRoles, eq(users.adminRoleId, adminRoles.id))

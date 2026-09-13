@@ -13,3 +13,4 @@ export * from "./role";
 export * from "./avatar";
 export * from "./job";
 export * from "./cache";
+export * from "./log";

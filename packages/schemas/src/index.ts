@@ -11,3 +11,4 @@ export * from "./settings";
 export * from "./role";
 export * from "./job";
 export * from "./cache";
+export * from "./log";

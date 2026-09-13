@@ -37,7 +37,7 @@ export async function findRoles(): Promise<AdminRole[]> {
       isSystem: adminRoles.isSystem,
       createdAt: adminRoles.createdAt,
       updatedAt: adminRoles.updatedAt,
-      usersCount: sql<number>`(SELECT count(*) FROM users u WHERE u.admin_role_id = ${adminRoles.id})`,
+      usersCount: sql<number>`(SELECT count(*) FROM users u WHERE u.admin_role_id = "admin_roles"."id")`,
     })
     .from(adminRoles)
     .orderBy(adminRoles.createdAt);
@@ -75,7 +75,7 @@ export async function findRoleById(id: string): Promise<AdminRole | undefined> {
       isSystem: adminRoles.isSystem,
       createdAt: adminRoles.createdAt,
       updatedAt: adminRoles.updatedAt,
-      usersCount: sql<number>`(SELECT count(*) FROM users u WHERE u.admin_role_id = ${adminRoles.id})`,
+      usersCount: sql<number>`(SELECT count(*) FROM users u WHERE u.admin_role_id = "admin_roles"."id")`,
     })
     .from(adminRoles)
     .where(eq(adminRoles.id, id));

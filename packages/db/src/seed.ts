@@ -18,61 +18,7 @@ const TOPICS = [
   { key: "design", name: "Product Design", icon: "Palette" },
 ];
 
-const DEFAULT_TAGS: { key: string; name: string; topicKey: string }[] = [
-  // AI
-  { key: "openai", name: "OpenAI", topicKey: "ai" },
-  { key: "llm", name: "LLMs", topicKey: "ai" },
-  { key: "claude", name: "Claude", topicKey: "ai" },
-  { key: "gemini", name: "Gemini", topicKey: "ai" },
-  { key: "deepmind", name: "DeepMind", topicKey: "ai" },
-  { key: "rag", name: "RAG", topicKey: "ai" },
-  { key: "pytorch", name: "PyTorch", topicKey: "ai" },
-  { key: "mistral", name: "Mistral", topicKey: "ai" },
-  { key: "huggingface", name: "Hugging Face", topicKey: "ai" },
-  { key: "agentic", name: "AI Agents", topicKey: "ai" },
-  // WebDev
-  { key: "react", name: "React", topicKey: "webdev" },
-  { key: "nextjs", name: "Next.js", topicKey: "webdev" },
-  { key: "typescript", name: "TypeScript", topicKey: "webdev" },
-  { key: "javascript", name: "JavaScript", topicKey: "webdev" },
-  { key: "vue", name: "Vue", topicKey: "webdev" },
-  { key: "svelte", name: "Svelte", topicKey: "webdev" },
-  { key: "tailwind", name: "Tailwind CSS", topicKey: "webdev" },
-  { key: "nodejs", name: "Node.js", topicKey: "webdev" },
-  { key: "bun", name: "Bun", topicKey: "webdev" },
-  { key: "graphql", name: "GraphQL", topicKey: "webdev" },
-  // Mobile
-  { key: "react-native", name: "React Native", topicKey: "mobile" },
-  { key: "flutter", name: "Flutter", topicKey: "mobile" },
-  { key: "ios", name: "iOS", topicKey: "mobile" },
-  { key: "android", name: "Android", topicKey: "mobile" },
-  { key: "swift", name: "Swift", topicKey: "mobile" },
-  { key: "kotlin", name: "Kotlin", topicKey: "mobile" },
-  { key: "expo", name: "Expo", topicKey: "mobile" },
-  // DevOps
-  { key: "kubernetes", name: "Kubernetes", topicKey: "devops" },
-  { key: "docker", name: "Docker", topicKey: "devops" },
-  { key: "aws", name: "AWS", topicKey: "devops" },
-  { key: "cloudflare", name: "Cloudflare", topicKey: "devops" },
-  { key: "terraform", name: "Terraform", topicKey: "devops" },
-  { key: "linux", name: "Linux", topicKey: "devops" },
-  // Cybersecurity
-  { key: "vulnerability", name: "Vulnerability", topicKey: "cybersecurity" },
-  { key: "zero-day", name: "Zero Day", topicKey: "cybersecurity" },
-  { key: "ransomware", name: "Ransomware", topicKey: "cybersecurity" },
-  { key: "infosec", name: "InfoSec", topicKey: "cybersecurity" },
-  // Startups
-  { key: "funding", name: "Funding", topicKey: "startups" },
-  { key: "venture-capital", name: "Venture Capital", topicKey: "startups" },
-  { key: "ycombinator", name: "Y Combinator", topicKey: "startups" },
-  // OpenSource
-  { key: "rust", name: "Rust", topicKey: "opensource" },
-  { key: "golang", name: "Go", topicKey: "opensource" },
-  { key: "python", name: "Python", topicKey: "opensource" },
-  // Design
-  { key: "figma", name: "Figma", topicKey: "design" },
-  { key: "ux", name: "UX Design", topicKey: "design" },
-];
+import { seedTags } from "./seed-tags";
 
 // India-weighted default sources (blueprint §3). All free; URLs editable later in admin.
 // India-weighted default sources & verified official technology industry sources.
@@ -308,21 +254,7 @@ async function main() {
   console.log(`Topics: ${TOPICS.length} ensured (idempotent by key)`);
 
   // Ensure tags linked to topics
-  const dbTopics = await db.select({ id: topics.id, key: topics.key }).from(topics);
-  const topicIdByKey = new Map(dbTopics.map((t) => [t.key, t.id]));
-
-  for (const t of DEFAULT_TAGS) {
-    const topicId = topicIdByKey.get(t.topicKey);
-    await db
-      .insert(tags)
-      .values({
-        key: t.key,
-        name: t.name,
-        topicId: topicId ?? null,
-      })
-      .onConflictDoNothing();
-  }
-  console.log(`Tags: ${DEFAULT_TAGS.length} ensured (idempotent by key)`);
+  await seedTags(db);
 
   // Ensure default system settings
   await db

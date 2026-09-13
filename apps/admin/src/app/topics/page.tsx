@@ -244,6 +244,7 @@ export default function TopicsPage() {
           setEditingTopic(null);
           load();
         }}
+        onTagsUpdated={load}
       />
 
       {managingTagsTopic && (
@@ -281,17 +282,41 @@ function TopicModal({
   isOpen,
   onClose,
   onSaved,
+  onTagsUpdated,
 }: {
   topic: Topic | null;
   isOpen: boolean;
   onClose: () => void;
   onSaved: () => void;
+  onTagsUpdated?: () => void;
 }) {
+  const { can } = usePermissions();
   const [key, setKey] = useState("");
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Associated Tags state for Edit mode
+  const [topicTags, setTopicTags] = useState<Tag[]>([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [tagError, setTagError] = useState<string | null>(null);
+  const [newTagKey, setNewTagKey] = useState("");
+  const [newTagName, setNewTagName] = useState("");
+  const [addingTag, setAddingTag] = useState(false);
+
+  const fetchTopicTags = useCallback(async () => {
+    if (!topic) return;
+    setTagsLoading(true);
+    try {
+      const res = await api.tags.list(topic.id);
+      setTopicTags(res.tags);
+    } catch (err) {
+      console.error("Failed to load topic tags:", err);
+    } finally {
+      setTagsLoading(false);
+    }
+  }, [topic]);
 
   useEffect(() => {
     if (isOpen) {
@@ -300,8 +325,57 @@ function TopicModal({
       setIcon(topic?.icon ?? "");
       setError(null);
       setSaving(false);
+      setNewTagKey("");
+      setNewTagName("");
+      setTagError(null);
+      if (topic) {
+        fetchTopicTags();
+      } else {
+        setTopicTags([]);
+      }
     }
-  }, [isOpen, topic]);
+  }, [isOpen, topic, fetchTopicTags]);
+
+  const handleAddTagInline = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topic) return;
+    setTagError(null);
+    const k = newTagKey.trim().toLowerCase().replace(/\s+/g, "-");
+    const n = newTagName.trim();
+    if (!k || !n) return;
+
+    const validated = tagCreateSchema.safeParse({ key: k, name: n, topicId: topic.id });
+    if (!validated.success) {
+      setTagError(validated.error.errors[0]?.message ?? "Invalid tag data");
+      return;
+    }
+
+    setAddingTag(true);
+    try {
+      await api.tags.create(validated.data);
+      setNewTagKey("");
+      setNewTagName("");
+      toast.success(`Tag "${n}" added to ${topic.name}`);
+      await fetchTopicTags();
+      onTagsUpdated?.();
+    } catch (err) {
+      setTagError(err instanceof Error ? err.message : "Failed to add tag");
+    } finally {
+      setAddingTag(false);
+    }
+  };
+
+  const handleDeleteTagInline = async (tagId: string, tagName: string) => {
+    if (!window.confirm(`Delete tag "${tagName}"?`)) return;
+    try {
+      await api.tags.delete(tagId);
+      toast.success(`Deleted tag "${tagName}"`);
+      await fetchTopicTags();
+      onTagsUpdated?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete tag");
+    }
+  };
 
   const save = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -438,6 +512,89 @@ function TopicModal({
             })}
           </div>
         </div>
+
+        {topic && (
+          <div className="border-t border-border/60 pt-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <TagIcon size={13} className="text-primary" />
+                <span>Associated Tags ({topicTags.length})</span>
+              </label>
+              {tagsLoading && <span className="text-xs text-muted-foreground">Loading tags...</span>}
+            </div>
+
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-1">
+              {topicTags.map((t) => (
+                <span
+                  key={t.id}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-foreground"
+                >
+                  <TagIcon size={11} className="text-primary" />
+                  <span className="font-medium">{t.name}</span>
+                  <span className="text-muted-foreground font-mono text-[10px]">({t.key})</span>
+                  {can("topics", "write") && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTagInline(t.id, t.name)}
+                      className="ml-1 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                      title="Remove tag"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </span>
+              ))}
+              {!tagsLoading && topicTags.length === 0 && (
+                <p className="text-xs text-muted-foreground">No tags assigned to this topic yet.</p>
+              )}
+            </div>
+
+            {can("topics", "create") && (
+              <div className="rounded-2xl border border-border/80 bg-muted/20 p-3 space-y-2.5">
+                <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Plus size={13} className="text-primary" />
+                  <span>Add Tag to {topic.name}</span>
+                </div>
+                <div className="flex flex-wrap items-end gap-2.5">
+                  <div className="flex-1 min-w-35">
+                    <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Tag Name</label>
+                    <Input
+                      value={newTagName}
+                      onChange={(e) => {
+                        setNewTagName(e.target.value);
+                        if (!newTagKey || newTagKey === newTagName.toLowerCase().replace(/\s+/g, "-").slice(0, -1)) {
+                          setNewTagKey(e.target.value.toLowerCase().replace(/\s+/g, "-"));
+                        }
+                      }}
+                      placeholder="e.g. Next.js"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-35">
+                    <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Tag Key (slug)</label>
+                    <Input
+                      value={newTagKey}
+                      onChange={(e) => setNewTagKey(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                      placeholder="e.g. nextjs"
+                      className="h-8 text-xs font-mono"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddTagInline}
+                    disabled={addingTag || !newTagKey.trim() || !newTagName.trim()}
+                    className="h-8 text-xs cursor-pointer gap-1"
+                  >
+                    <Plus size={13} />
+                    <span>{addingTag ? "Adding..." : "Add Tag"}</span>
+                  </Button>
+                </div>
+                {tagError && <p className="text-xs text-destructive">{tagError}</p>}
+              </div>
+            )}
+          </div>
+        )}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

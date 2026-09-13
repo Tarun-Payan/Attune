@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@attune/logger": "workspace:*",
     "@attune/schemas": "workspace:*",
     "@attune/types": "workspace:*",
     "@base-ui/react": "^1.8.0",

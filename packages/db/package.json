@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/seed.ts",
+    "db:seed:tags": "tsx src/seed-tags.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

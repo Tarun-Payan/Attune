@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
-import { OAUTH_PROVIDERS, type AdminAuthResponse, type AdminMeResponse, type AuthResponse, type OAuthProfile, type OAuthProvider, type PublicUser, type User } from "@attune/types";
+import { OAUTH_PROVIDERS, type AdminAuthResponse, type AdminMeResponse, type AuthResponse, type JobContext, type OAuthProfile, type OAuthProvider, type PublicUser, type User } from "@attune/types";
 import type { AdminLoginInput, ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from "@attune/schemas";
 import { notify } from "@attune/notifications";
 import { enqueueWelcomeEmail } from "../queues";
@@ -71,7 +71,7 @@ export function allowedRedirect(candidate?: string): string | undefined {
   return undefined;
 }
 
-export async function register(input: RegisterInput): Promise<AuthResponse> {
+export async function register(input: RegisterInput, context?: JobContext): Promise<AuthResponse> {
   const existing = await findUserByEmail(input.email);
   if (existing) {
     throw new ConflictError("An account with this email already exists");
@@ -88,6 +88,7 @@ export async function register(input: RegisterInput): Promise<AuthResponse> {
     userId: user.id,
     email: user.email,
     name: user.name ?? undefined,
+    context,
   }).catch(() => {});
 
   await notify.welcome(user.id, user.name ?? undefined).catch(() => {});
@@ -380,7 +381,7 @@ async function fetchGitHubProfile(
   };
 }
 
-export async function handleOAuthCallback(rawProvider: string, code: string, state: string) {
+export async function handleOAuthCallback(rawProvider: string, code: string, state: string, context?: JobContext) {
   const provider = rawProvider.toUpperCase() as OAuthProvider;
   if (!(OAUTH_PROVIDERS as readonly string[]).includes(provider)) {
     throw new NotFoundError("Unknown OAuth provider");
@@ -447,6 +448,7 @@ export async function handleOAuthCallback(rawProvider: string, code: string, sta
       userId: user.id,
       email: user.email,
       name: user.name ?? undefined,
+      context,
     }).catch(() => {});
 
     await notify.welcome(user.id, user.name ?? undefined).catch(() => {});

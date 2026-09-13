@@ -10,3 +10,4 @@ export * from "./settingsRepository";
 export * from "./roleRepository";
 export * from "./verificationRepository";
 export * from "./healthRepository";
+export * from "./logRepository";

@@ -14,11 +14,17 @@
       "node": "22.14.0",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-attune.up.railway.app"
       }
     },
     "production": {
       "autoIncrement": true,
-      "node": "22.14.0"
+      "node": "22.14.0",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-attune.up.railway.app"
+      }
     }
   },
   "submit": {

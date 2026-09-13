@@ -20,7 +20,9 @@ const FEATURES_META: Record<AdminFeature, { label: string; description: string }
   jobs: { label: "Jobs", description: "Inspect BullMQ workers, job telemetry, and Bull Board queues" },
   roles: { label: "Roles", description: "Manage admin roles, permission matrices, and user authorizations" },
   cache: { label: "Cache", description: "Inspect Redis memory, key namespaces, and cache eviction" },
+  logs: { label: "Logs", description: "Inspect in-memory Redis log buffer, trace requests, and clear buffer" },
 };
+
 
 const ACTIONS_META: Record<AdminAction, { label: string; description: string }> = {
   read: { label: "Read", description: "View records" },

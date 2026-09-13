@@ -17,6 +17,8 @@ import {
   updateSourceLastSync,
 } from "../repository";
 
+import type { Logger } from "@attune/logger";
+
 const log = childLogger({ component: "ingestService" });
 const BREAKER_THRESHOLD = 10;
 
@@ -27,12 +29,30 @@ export interface IngestResult {
   added?: number;
 }
 
-export async function syncSource(sourceId: string): Promise<IngestResult> {
+export interface SyncSourceOptions {
+  runId?: string;
+  requestId?: string;
+  log?: Logger;
+  jobId?: string;
+}
+
+export async function syncSource(sourceId: string, options?: SyncSourceOptions): Promise<IngestResult> {
   const startedAt = new Date();
+  const runId = options?.runId;
+  const requestId = options?.requestId;
+  const jobId = options?.jobId;
+  const currentLog = options?.log ?? log.child({
+    ...(runId ? { runId } : {}),
+    ...(requestId ? { requestId } : {}),
+    ...(jobId ? { jobId } : {}),
+    sourceId,
+  });
 
   const source = await findSourceById(sourceId);
   if (!source) return { sourceId, skipped: "source not found" };
   if (!source.enabled) return { sourceId, skipped: "source disabled" };
+
+  currentLog.info({ sourceId, source: source.name, runId, requestId, jobId }, "Sync source started");
 
   const connector = connectors[source.type];
   if (!connector) return { sourceId, skipped: `no connector for ${source.type}` };
@@ -42,7 +62,8 @@ export async function syncSource(sourceId: string): Promise<IngestResult> {
     normalized = await connector.fetch(source.config);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    await finalizeRun(sourceId, startedAt, "error", 0, 0, message);
+    currentLog.error({ err, sourceId, runId, requestId, jobId }, "Sync source failed");
+    await finalizeRun(sourceId, startedAt, "error", 0, 0, message, jobId);
     await tripBreakerIfStuck(sourceId);
     throw err; // let BullMQ apply its retry policy
   }
@@ -107,12 +128,30 @@ export async function syncSource(sourceId: string): Promise<IngestResult> {
   if (inserted.length > 0) {
     await pipelineQueue.add(
       "notify-items",
-      { itemIds: inserted.map((i) => i.id) },
+      {
+        itemIds: inserted.map((i) => i.id),
+        context: {
+          ...(runId ? { runId } : {}),
+          ...(requestId ? { requestId } : {}),
+        },
+      },
       { ...JOB_OPTS, jobId: undefined },
     );
   }
 
-  await finalizeRun(sourceId, startedAt, "ok", normalized.length, inserted.length, null);
+  await finalizeRun(sourceId, startedAt, "ok", normalized.length, inserted.length, null, jobId);
+  currentLog.info(
+    {
+      sourceId,
+      source: source.name,
+      runId,
+      requestId,
+      fetched: normalized.length,
+      created: inserted.length,
+      skipped: normalized.length - inserted.length,
+    },
+    "Sync source completed",
+  );
   return { sourceId, found: normalized.length, added: inserted.length };
 }
 
@@ -123,6 +162,7 @@ async function finalizeRun(
   itemsFound: number,
   itemsNew: number,
   error: string | null,
+  jobId?: string | null,
 ) {
   const finishedAt = new Date();
   await recordSyncRun({
@@ -133,6 +173,7 @@ async function finalizeRun(
     error: error ? truncate(error, 2000) : null,
     startedAt,
     finishedAt,
+    jobId,
   });
   await updateSourceLastSync(sourceId, finishedAt);
 }

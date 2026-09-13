@@ -12,6 +12,7 @@
   "dependencies": {
     "@attune/cache": "workspace:*",
     "@attune/db": "workspace:*",
+    "@attune/logger": "workspace:*",
     "@attune/notifications": "workspace:*",
     "@attune/queue": "workspace:*",
     "@attune/schemas": "workspace:*",

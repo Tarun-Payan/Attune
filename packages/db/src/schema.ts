@@ -341,6 +341,7 @@ export const syncRuns = pgTable(
     sourceId: varchar("source_id")
       .notNull()
       .references(() => sources.id),
+    jobId: varchar("job_id"),
     status: varchar("status").notNull(), // "ok" | "error"
     itemsFound: integer("items_found").notNull().default(0),
     itemsNew: integer("items_new").notNull().default(0),
@@ -348,7 +349,10 @@ export const syncRuns = pgTable(
     startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
   },
-  (t) => [index("sync_runs_source_started_idx").on(t.sourceId, t.startedAt)],
+  (t) => [
+    index("sync_runs_source_started_idx").on(t.sourceId, t.startedAt),
+    index("sync_runs_job_id_idx").on(t.jobId),
+  ],
 );
 
 export const verificationCodes = pgTable(

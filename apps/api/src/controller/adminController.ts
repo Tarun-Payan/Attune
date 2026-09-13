@@ -11,9 +11,12 @@ import type {
   TopicCreateInput,
   TopicPatchInput,
   UserPatchInput,
+  AdminLogsQueryInput,
 } from "@attune/schemas";
 import type { SyncStatus } from "@attune/types";
 import * as adminService from "../services/adminService";
+import * as logService from "../services/logService";
+
 
 export async function getStats(req: FastifyRequest, reply: FastifyReply) {
   const result = await adminService.getDashboardStats();
@@ -22,6 +25,12 @@ export async function getStats(req: FastifyRequest, reply: FastifyReply) {
 
 export async function listSources(req: FastifyRequest, reply: FastifyReply) {
   const result = await adminService.listSources();
+  return reply.code(200).send(result);
+}
+
+export async function getSource(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as { id: string };
+  const result = await adminService.getSource(id);
   return reply.code(200).send(result);
 }
 
@@ -46,7 +55,10 @@ export async function deleteSource(req: FastifyRequest, reply: FastifyReply) {
 
 export async function triggerSource(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as { id: string };
-  const result = await adminService.triggerSourceSync(id);
+  const result = await adminService.triggerSourceSync(id, {
+    requestId: req.id,
+    userId: req.user?.id,
+  });
   return reply.code(200).send(result);
 }
 
@@ -159,7 +171,10 @@ export async function updateSettings(req: FastifyRequest, reply: FastifyReply) {
 
 export async function queueCampaign(req: FastifyRequest, reply: FastifyReply) {
   const body = req.body as CampaignInput;
-  const result = await adminService.queueCampaign(body);
+  const result = await adminService.queueCampaign(body, {
+    requestId: req.id,
+    userId: req.user?.id,
+  });
   return reply.code(202).send(result);
 }
 
@@ -201,3 +216,15 @@ export async function clearCacheNamespace(req: FastifyRequest, reply: FastifyRep
   const result = await adminService.clearCacheNamespace(body.namespace, body.pattern);
   return reply.code(200).send(result);
 }
+
+export async function listLogs(req: FastifyRequest, reply: FastifyReply) {
+  const query = req.query as AdminLogsQueryInput;
+  const result = await logService.getAdminLogs(query);
+  return reply.code(200).send(result);
+}
+
+export async function clearLogs(_req: FastifyRequest, reply: FastifyReply) {
+  const result = await logService.clearAdminLogs();
+  return reply.code(200).send(result);
+}
+

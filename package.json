@@ -18,6 +18,7 @@
     "db:generate": "pnpm --filter @attune/db db:generate",
     "db:migrate": "pnpm --filter @attune/db db:migrate",
     "db:seed": "pnpm --filter @attune/db db:seed",
+    "db:seed:tags": "pnpm --filter @attune/db db:seed:tags",
     "db:studio": "pnpm --filter @attune/db exec drizzle-kit studio",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck"

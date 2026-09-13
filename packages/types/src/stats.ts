@@ -17,6 +17,21 @@ export interface ReadingStats {
   topTopicsWeek: { key: string; interactions: number }[];
 }
 
+export interface LogTopErrorItem {
+  message: string;
+  count: number;
+  service: string;
+  lastSeen: number;
+}
+
+export interface AdminLogStatsSummary {
+  totalErrors: number;
+  totalWarnings: number;
+  totalDebug: number;
+  impactedUsersCount: number;
+  topErrors: LogTopErrorItem[];
+}
+
 export interface AdminDashboardStats {
   usersTotal: number;
   usersNewToday: number;
@@ -42,4 +57,5 @@ export interface AdminDashboardStats {
     icon: string | null;
     n: number;
   }[];
+  logStats?: AdminLogStatsSummary;
 }

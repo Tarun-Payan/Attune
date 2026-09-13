@@ -1,18 +1,28 @@
-export interface SyncSourceJobPayload {
+export interface JobContext {
+  requestId?: string;
+  runId?: string;
+  userId?: string;
+}
+
+export interface BaseJobPayload {
+  context?: JobContext;
+}
+
+export interface SyncSourceJobPayload extends BaseJobPayload {
   sourceId: string;
 }
 
-export interface NotifyItemsJobPayload {
+export interface NotifyItemsJobPayload extends BaseJobPayload {
   itemIds: string[];
 }
 
-export interface WelcomeEmailJobPayload {
+export interface WelcomeEmailJobPayload extends BaseJobPayload {
   userId: string;
   email: string;
   name?: string;
 }
 
-export interface CampaignJobPayload {
+export interface CampaignJobPayload extends BaseJobPayload {
   title: string;
   body: string;
   channel: "push" | "email";
@@ -20,7 +30,7 @@ export interface CampaignJobPayload {
   userIds?: string[];
 }
 
-export type HeartbeatJobPayload = Record<string, never>;
-export type SweepJobPayload = Record<string, never>;
-export type SummarizeJobPayload = Record<string, never>;
-export type ClusterJobPayload = Record<string, never>;
+export interface HeartbeatJobPayload extends BaseJobPayload {}
+export interface SweepJobPayload extends BaseJobPayload {}
+export interface SummarizeJobPayload extends BaseJobPayload {}
+export interface ClusterJobPayload extends BaseJobPayload {}

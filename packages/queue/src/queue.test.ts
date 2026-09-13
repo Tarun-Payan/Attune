@@ -58,4 +58,34 @@ describe("Typed Dispatchers", () => {
 
     addSpy.mockRestore();
   });
+
+  it("enqueues jobs with context (requestId, userId) preserved", async () => {
+    const addSpy = vi.spyOn(pipelineQueue, "add").mockResolvedValue({ id: "welcome_1" } as any);
+
+    await enqueueWelcomeEmail({
+      userId: "u123",
+      email: "user@example.com",
+      name: "Alice",
+      context: {
+        requestId: "req_trace_456",
+        userId: "u123",
+      },
+    });
+
+    expect(addSpy).toHaveBeenCalledWith(
+      "send-welcome-email",
+      {
+        userId: "u123",
+        email: "user@example.com",
+        name: "Alice",
+        context: {
+          requestId: "req_trace_456",
+          userId: "u123",
+        },
+      },
+      expect.objectContaining({ jobId: "welcome-u123" }),
+    );
+
+    addSpy.mockRestore();
+  });
 });

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Play, Plus, Trash2 } from "lucide-react";
+import { Eye, Play, Plus, Trash2 } from "lucide-react";
 import { SOURCE_TYPES, type Source } from "@attune/types";
 import { sourceCreateSchema, sourcePatchSchema } from "@attune/schemas";
 import { api } from "@/lib/api";
@@ -198,7 +199,14 @@ export default function SourcesPage() {
                       </Td>
                     )}
                     {isVisible("name") && (
-                      <Td className="max-w-65 truncate font-semibold text-foreground">{s.name}</Td>
+                      <Td className="max-w-65 truncate font-semibold text-foreground">
+                        <Link
+                          href={`/sources/${s.id}`}
+                          className="hover:text-primary transition-colors hover:underline"
+                        >
+                          {s.name}
+                        </Link>
+                      </Td>
                     )}
                     {isVisible("type") && (
                       <Td>
@@ -216,6 +224,13 @@ export default function SourcesPage() {
                     {isVisible("actions") && (
                       <Td className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/sources/${s.id}`}
+                            className="inline-flex items-center rounded-4xl border border-transparent bg-muted/60 px-3 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer"
+                            title="View full details"
+                          >
+                            <Eye size={13} className="mr-1 inline text-primary" /> View
+                          </Link>
                           {can("sources", "write") && (
                             <Button variant="outline" size="sm" onClick={() => runNow(s.id)} title="Run now">
                               <Play size={14} className="mr-1 inline" /> Sync

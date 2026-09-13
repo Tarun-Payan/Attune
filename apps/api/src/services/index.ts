@@ -8,3 +8,5 @@ export * as adminService from "./adminService";
 export * as roleService from "./roleService";
 export * as topicService from "./topicService";
 export * as healthService from "./healthService";
+export * as logService from "./logService";
+

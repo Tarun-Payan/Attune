@@ -3,11 +3,15 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import {
   adminAuthResponseSchema,
+  adminClearLogsResponseSchema,
   adminDashboardStatsResponseSchema,
   adminItemsListResponseSchema,
   adminItemsQuerySchema,
   adminLoginSchema,
+  adminLogsOverviewResponseSchema,
+  adminLogsQuerySchema,
   adminMeResponseSchema,
+
   adminRoleDetailResponseSchema,
   adminRolesResponseSchema,
   adminTagsResponseSchema,
@@ -221,6 +225,22 @@ export async function adminRoutes(fastify: FastifyInstance) {
       },
     },
     adminController.listSources,
+  );
+
+  app.get(
+    "/v1/admin/sources/:id",
+    {
+      preHandler: requirePermission("sources", "read"),
+      schema: {
+        tags: ["admin"],
+        summary: "Get single source by ID",
+        params: idParamSchema,
+        response: {
+          200: z.object({ source: sourceSchema }),
+        },
+      },
+    },
+    adminController.getSource,
   );
 
   app.post(
@@ -662,4 +682,37 @@ export async function adminRoutes(fastify: FastifyInstance) {
     },
     adminController.clearCacheNamespace,
   );
+
+  // ── System Logs Console ──────────────────────────────────────────────────
+  app.get(
+    "/v1/admin/logs",
+    {
+      preHandler: requirePermission("logs", "read"),
+      schema: {
+        tags: ["admin"],
+        summary: "Retrieve structured logs from the in-memory Redis buffer with filtering",
+        querystring: adminLogsQuerySchema,
+        response: {
+          200: adminLogsOverviewResponseSchema,
+        },
+      },
+    },
+    adminController.listLogs,
+  );
+
+  app.delete(
+    "/v1/admin/logs",
+    {
+      preHandler: requirePermission("logs", "write"),
+      schema: {
+        tags: ["admin"],
+        summary: "Clear the in-memory Redis log buffer",
+        response: {
+          200: adminClearLogsResponseSchema,
+        },
+      },
+    },
+    adminController.clearLogs,
+  );
 }
+

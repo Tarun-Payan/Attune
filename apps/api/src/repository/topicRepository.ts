@@ -66,10 +66,10 @@ export async function listAdminTopics(): Promise<AdminTopicRow[]> {
       key: topics.key,
       name: topics.name,
       icon: topics.icon,
-      itemTotal: sql<number>`(SELECT count(*) FROM item_topics it WHERE it.topic_id = ${topics.id})`,
-      itemWeek: sql<number>`(SELECT count(*) FROM item_topics it JOIN items i ON i.id = it.item_id WHERE it.topic_id = ${topics.id} AND i.published_at > now() - interval '7 days')`,
-      followers: sql<number>`(SELECT count(*) FROM user_topics ut WHERE ut.topic_id = ${topics.id})`,
-      tagCount: sql<number>`(SELECT count(*) FROM tags tg WHERE tg.topic_id = ${topics.id})`,
+      itemTotal: sql<number>`(SELECT count(*) FROM item_topics it WHERE it.topic_id = "topics"."id")`,
+      itemWeek: sql<number>`(SELECT count(*) FROM item_topics it JOIN items i ON i.id = it.item_id WHERE it.topic_id = "topics"."id" AND i.published_at > now() - interval '7 days')`,
+      followers: sql<number>`(SELECT count(*) FROM user_topics ut WHERE ut.topic_id = "topics"."id")`,
+      tagCount: sql<number>`(SELECT count(*) FROM tags tg WHERE tg.topic_id = "topics"."id")`,
     })
     .from(topics)
     .orderBy(topics.name);

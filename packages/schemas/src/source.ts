@@ -47,6 +47,7 @@ export const syncRunSchema = z.object({
   sourceId: z.string(),
   sourceName: z.string().optional(),
   sourceType: z.enum(SOURCE_TYPES).optional(),
+  jobId: z.string().nullable().optional(),
   status: z.enum(SYNC_STATUSES),
   itemsFound: z.number(),
   itemsNew: z.number(),

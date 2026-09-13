@@ -8,7 +8,7 @@ import type {
   TopicCreateInput,
   TopicPatchInput,
 } from "@attune/schemas";
-import type { PatchSystemSettingsInput, SyncStatus } from "@attune/types";
+import type { JobContext, PatchSystemSettingsInput, SyncStatus } from "@attune/types";
 import { enqueueCampaign, enqueueSync } from "../queues";
 import {
   CACHE_KEYS,
@@ -55,9 +55,17 @@ import {
 } from "../repository/settingsRepository";
 import { listCampaignLogs } from "../repository/notificationRepository";
 import { ConflictError, NotFoundError } from "../errors";
+import { getLogStatsSummary } from "./logService";
 
 export async function getDashboardStats() {
-  return getOrSet(CACHE_KEYS.ADMIN_STATS, 300, () => getDashboardMetrics());
+  const [metrics, logStats] = await Promise.all([
+    getOrSet(CACHE_KEYS.ADMIN_STATS, 60, () => getDashboardMetrics()),
+    getLogStatsSummary().catch(() => undefined),
+  ]);
+  return {
+    ...metrics,
+    logStats,
+  };
 }
 
 export async function listSources() {
@@ -66,6 +74,14 @@ export async function listSources() {
     count: sources.length,
     sources,
   };
+}
+
+export async function getSource(id: string) {
+  const source = await findSourceById(id);
+  if (!source) {
+    throw new NotFoundError("Source not found");
+  }
+  return { source };
 }
 
 export async function createSource(input: SourceCreateInput) {
@@ -92,13 +108,13 @@ export async function deleteSource(id: string) {
   return { deleted: true as const };
 }
 
-export async function triggerSourceSync(id: string) {
+export async function triggerSourceSync(id: string, context?: JobContext) {
   const source = await findSourceById(id);
   if (!source) {
     throw new NotFoundError("Source not found");
   }
 
-  const job = await enqueueSync({ sourceId: id });
+  const job = await enqueueSync({ sourceId: id, context });
   await del(CACHE_KEYS.ADMIN_STATS);
 
   return { queued: true as const, jobId: job.id, source: source.name };
@@ -186,8 +202,8 @@ export async function deleteTopic(id: string) {
   return { deleted: true as const };
 }
 
-export async function queueCampaign(input: CampaignInput) {
-  const job = await enqueueCampaign(input);
+export async function queueCampaign(input: CampaignInput, context?: JobContext) {
+  const job = await enqueueCampaign({ ...input, context });
   return { queued: true as const, jobId: job.id };
 }
 

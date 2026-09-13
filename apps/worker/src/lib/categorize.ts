@@ -105,6 +105,7 @@ export function categorize(text: string, hints: string[] = []): TopicMatch[] {
 }
 
 const TAG_KEYWORDS: Record<string, string[]> = {
+  // ── 1. AI ──────────────────────────────────────────────────────────
   openai: ["openai", "chatgpt", "gpt-4", "gpt-5", "o1", "o3"],
   llm: ["llm", "llms", "large language model"],
   claude: ["claude", "anthropic"],
@@ -115,6 +116,13 @@ const TAG_KEYWORDS: Record<string, string[]> = {
   mistral: ["mistral"],
   huggingface: ["hugging face", "huggingface"],
   agentic: ["agentic", "ai agent", "ai agents", "autonomous agent"],
+  langchain: ["langchain"],
+  ollama: ["ollama"],
+  diffusion: ["diffusion model", "stable diffusion", "midjourney"],
+  "computer-vision": ["computer vision", "opencv", "object detection"],
+  nvidia: ["nvidia", "blackwell", "cuda"],
+
+  // ── 2. WebDev ──────────────────────────────────────────────────────
   react: ["react", "react.js", "reactjs"],
   nextjs: ["next.js", "nextjs"],
   typescript: ["typescript"],
@@ -125,31 +133,115 @@ const TAG_KEYWORDS: Record<string, string[]> = {
   nodejs: ["node.js", "nodejs"],
   bun: ["bun", "bun.sh"],
   graphql: ["graphql"],
+  vite: ["vite", "vitejs"],
+  astro: ["astro", "astro.build"],
+  angular: ["angular", "angularjs"],
+  webassembly: ["webassembly", "wasm"],
+
+  // ── 3. Mobile ──────────────────────────────────────────────────────
   "react-native": ["react native", "react-native"],
   flutter: ["flutter"],
-  ios: ["ios", "iphone", "ipad", "swiftui"],
-  android: ["android", "jetpack compose"],
+  ios: ["ios", "iphone", "ipad"],
+  android: ["android"],
   swift: ["swift"],
   kotlin: ["kotlin"],
   expo: ["expo"],
+  "jetpack-compose": ["jetpack compose"],
+  swiftui: ["swiftui"],
+  pwa: ["pwa", "progressive web app"],
+
+  // ── 4. DevOps ──────────────────────────────────────────────────────
   kubernetes: ["kubernetes", "k8s"],
   docker: ["docker", "dockerfile", "containerd"],
   aws: ["aws", "amazon web services", "lambda", "s3", "ec2"],
   cloudflare: ["cloudflare", "workers", "r2"],
   terraform: ["terraform", "opentofu"],
   linux: ["linux", "ubuntu", "debian", "arch linux", "kernel"],
+  "ci-cd": ["ci/cd", "github actions", "gitlab ci", "continuous integration"],
+  azure: ["azure", "microsoft azure"],
+  gcp: ["google cloud", "gcp"],
+  serverless: ["serverless"],
+  microservices: ["microservices", "microservice"],
+  prometheus: ["prometheus", "grafana"],
+
+  // ── 5. Cybersecurity ───────────────────────────────────────────────
   vulnerability: ["vulnerability", "cve", "security flaw"],
   "zero-day": ["zero-day", "0-day", "zero day"],
   ransomware: ["ransomware"],
-  infosec: ["infosec", "cyber attack", "data breach"],
+  infosec: ["infosec", "cyber attack"],
+  malware: ["malware", "spyware", "trojan"],
+  phishing: ["phishing"],
+  cryptography: ["cryptography", "encryption"],
+  "penetration-testing": ["penetration testing", "pentest"],
+  "zero-trust": ["zero trust"],
+  "data-breach": ["data breach", "credential leak"],
+
+  // ── 6. Startups ────────────────────────────────────────────────────
   funding: ["funding round", "seed round", "series a", "series b", "series c"],
   "venture-capital": ["venture capital", "vc fund", "vc firm"],
   ycombinator: ["y combinator", "ycombinator", "yc w2", "yc s2"],
+  saas: ["saas", "software as a service"],
+  ipo: ["ipo", "initial public offering", "acquisition"],
+  bootstrapping: ["bootstrapped", "bootstrapping"],
+  "product-market-fit": ["product-market fit", "pmf"],
+  fintech: ["fintech"],
+
+  // ── 7. Gadgets ─────────────────────────────────────────────────────
+  smartphones: ["smartphone", "smartphones"],
+  "apple-silicon": ["apple silicon", "m1", "m2", "m3", "m4"],
+  gpu: ["gpu", "gpus", "graphics card", "rtx"],
+  wearables: ["smartwatch", "wearables", "apple watch"],
+  laptops: ["laptop", "laptops", "macbook"],
+  iot: ["iot", "internet of things", "smart home"],
+  "vr-ar": ["virtual reality", "augmented reality", "vision pro", "meta quest", "vr headset"],
+  semiconductors: ["semiconductor", "semiconductors", "tsmc", "chipmaker"],
+
+  // ── 8. Science ─────────────────────────────────────────────────────
+  space: ["space exploration", "nasa", "isro", "spacex", "artemis", "james webb"],
+  "quantum-computing": ["quantum computing", "quantum computer", "qubit"],
+  physics: ["physics", "astronomy", "telescope", "cern"],
+  biotech: ["biotechnology", "biotech", "crispr", "genomics", "mrna"],
+  "climate-tech": ["climate tech", "clean energy", "solar power"],
+  neuroscience: ["neuroscience", "neuralink", "brain-computer interface"],
+  robotics: ["robotics", "humanoid robot", "boston dynamics"],
+
+  // ── 9. Gaming ──────────────────────────────────────────────────────
+  "unreal-engine": ["unreal engine", "ue5"],
+  unity: ["unity engine", "unity3d"],
+  playstation: ["playstation", "ps5"],
+  xbox: ["xbox", "game pass"],
+  nintendo: ["nintendo", "nintendo switch"],
+  "pc-gaming": ["pc gaming", "steam deck", "steam"],
+  esports: ["esports", "competitive gaming"],
+  "game-dev": ["game development", "game dev", "indie game"],
+
+  // ── 10. Crypto ─────────────────────────────────────────────────────
+  bitcoin: ["bitcoin", "btc", "satoshi"],
+  ethereum: ["ethereum", "eth", "vitalik"],
+  solana: ["solana", "sol"],
+  defi: ["defi", "decentralized finance", "uniswap"],
+  "smart-contracts": ["smart contract", "smart contracts", "solidity"],
+  web3: ["web3"],
+  stablecoins: ["stablecoin", "stablecoins", "usdt", "usdc"],
+  layer2: ["layer 2", "layer-2", "arbitrum", "optimism", "zk-rollup"],
+
+  // ── 11. OpenSource ─────────────────────────────────────────────────
   rust: ["rust", "rustlang"],
   golang: ["golang", "go language"],
   python: ["python", "python3"],
+  git: ["git", "github", "gitlab"],
+  "linux-kernel": ["linux kernel", "torvalds"],
+  foss: ["foss", "open source software", "free software"],
+  devtools: ["developer tools", "cli tool", "ide"],
+
+  // ── 12. Design ─────────────────────────────────────────────────────
   figma: ["figma", "figjam"],
   ux: ["ux design", "user experience", "wireframe"],
+  ui: ["ui design", "user interface"],
+  "design-systems": ["design system", "design tokens"],
+  "interaction-design": ["interaction design", "motion design"],
+  accessibility: ["accessibility", "a11y", "wcag"],
+  typography: ["typography", "font pairing"],
 };
 
 const COMPILED_TAGS = Object.entries(TAG_KEYWORDS).map(([tagKey, words]) => ({

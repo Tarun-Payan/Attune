@@ -20,6 +20,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@attune/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@attune/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -99,6 +102,9 @@ importers:
       '@attune/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@attune/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@attune/notifications':
         specifier: workspace:*
         version: link:../../packages/notifications
@@ -260,6 +266,9 @@ importers:
       '@attune/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@attune/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
       '@attune/notifications':
         specifier: workspace:*
         version: link:../../packages/notifications
@@ -365,6 +374,22 @@ importers:
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
+
+  packages/logger:
+    dependencies:
+      pino:
+        specifier: ^9.4.0
+        version: 9.14.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/notifications:
     dependencies:

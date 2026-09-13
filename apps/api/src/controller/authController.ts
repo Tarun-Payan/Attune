@@ -4,7 +4,7 @@ import * as authService from "../services/authService";
 
 export async function register(req: FastifyRequest, reply: FastifyReply) {
   const body = req.body as RegisterInput;
-  const result = await authService.register(body);
+  const result = await authService.register(body, { requestId: req.id });
   return reply.code(201).send(result);
 }
 
@@ -45,6 +45,7 @@ export async function oauthCallback(req: FastifyRequest, reply: FastifyReply) {
     provider,
     code,
     state,
+    { requestId: req.id },
   );
 
   if (redirect) {

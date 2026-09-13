@@ -41,7 +41,7 @@ export const tagSchema = z.object({
   key: z.string(),
   name: z.string(),
   topicId: z.string().nullable().optional(),
-  createdAt: z.string().optional(),
+  createdAt: z.union([z.date(), z.string()]).optional(),
 });
 
 export const tagsResponseSchema = z.object({
@@ -56,7 +56,7 @@ export const adminTagRowSchema = z.object({
   topicId: z.string().nullable().optional(),
   itemCount: z.number(),
   topicName: z.string().nullable().optional(),
-  createdAt: z.string().optional(),
+  createdAt: z.union([z.date(), z.string()]).optional(),
 });
 
 export const adminTagsResponseSchema = z.object({

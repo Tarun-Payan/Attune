@@ -24,10 +24,27 @@ import { feedRoutes } from "./routes/feed";
 import { searchRoutes } from "./routes/search";
 import { statsRoutes } from "./routes/stats";
 import { seedSuperAdminRole } from "./repository/roleRepository";
-import { closeAllQueues } from "./queues";
-import { closeRedisClient } from "@attune/cache";
+import { getFastifyLoggerConfig, logRequestCompletion } from "@attune/logger";
 
-const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
+import { closeAllQueues } from "./queues";
+import { closeRedisClient, getRedisClient } from "@attune/cache";
+
+const app = Fastify({
+  ...getFastifyLoggerConfig("api", {
+    redisClient: process.env.NODE_ENV !== "test" ? getRedisClient() : undefined,
+  }),
+});
+
+// Always attach the correlation request ID to response headers
+app.addHook("onSend", async (req, reply) => {
+  reply.header("x-request-id", req.id);
+});
+
+// Single structured log on request completion (categorized by HTTP status code)
+app.addHook("onResponse", async (req, reply) => {
+  logRequestCompletion(req, reply);
+});
+
 
 // Set Zod validator and serializer compilers
 app.setValidatorCompiler(validatorCompiler);

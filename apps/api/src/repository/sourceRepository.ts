@@ -21,6 +21,7 @@ export interface UpdateSourceData {
 
 export interface CreateSyncRunData {
   sourceId: string;
+  jobId?: string | null;
   status: SyncStatus;
   itemsFound: number;
   itemsNew: number;
@@ -89,6 +90,7 @@ export async function listSyncRuns(
         sourceId: syncRuns.sourceId,
         sourceName: sources.name,
         sourceType: sources.type,
+        jobId: syncRuns.jobId,
         status: syncRuns.status,
         itemsFound: syncRuns.itemsFound,
         itemsNew: syncRuns.itemsNew,

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { AdminAction, AdminFeature, AdminPermission, AdminRole, AdminUserWithRole } from "@attune/types";
+
 import { api, getStoredPermissions, getStoredRole, getStoredUser, getToken } from "./api";
 
 interface PermissionContextValue {
@@ -60,10 +61,14 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     refreshPermissions();
   }, []);
 
-  const can = (feature: AdminFeature, action: AdminAction): boolean => {
-    if (!permissions || permissions.length === 0) return false;
-    return permissions.some((p) => p.feature === feature && p.action === action);
-  };
+  const can = useCallback(
+    (feature: AdminFeature, action: AdminAction): boolean => {
+      if (!permissions || permissions.length === 0) return false;
+      return permissions.some((p) => p.feature === feature && p.action === action);
+    },
+    [permissions],
+  );
+
 
   return (
     <PermissionContext.Provider

@@ -3,6 +3,10 @@ import { db } from "@attune/db/client";
 import { systemSettings } from "@attune/db/schema";
 import type { PatchSystemSettingsInput, SystemSettings } from "@attune/types";
 
+import { createLogger } from "@attune/logger";
+
+const log = createLogger({ service: "api", component: "settingsRepository" });
+
 export const DEFAULT_SETTINGS: SystemSettings = {
   reportAutoHideThreshold: 5,
   explorationRatioPercent: 10,
@@ -33,7 +37,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
     cachedSettings = { data: settings, expiresAt: now + 30_000 };
     return settings;
   } catch (err) {
-    console.warn("Failed to query system_settings from database, falling back to DEFAULT_SETTINGS:", err);
+    log.warn({ err }, "Failed to query system_settings from database, falling back to DEFAULT_SETTINGS");
     return DEFAULT_SETTINGS;
   }
 }

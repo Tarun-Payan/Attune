@@ -26,6 +26,7 @@ import {
   Send,
   Sparkles,
   Tag,
+  Terminal,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -53,6 +54,16 @@ const INTERACTION_COLORS: Record<string, string> = {
   click: "#f59e0b",
   dismiss: "#6b7280",
 };
+
+function formatTimeAgo(ts: number): string {
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${Math.floor(diffHours / 24)}d ago`;
+}
 
 export default function DashboardPage() {
   const { can, loading: permsLoading } = usePermissions();
@@ -123,7 +134,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Primary KPI Metric Cards with 7-Day Sparkline Trends */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
           label="Total Users"
           value={stats.usersTotal.toLocaleString()}
@@ -162,6 +173,25 @@ export default function DashboardPage() {
           sub={stats.failingSources.length === 0 ? "All sources syncing" : "Action required"}
           warn={stats.failingSources.length > 0}
           Icon={AlertTriangle}
+          href="/sources"
+        />
+        <StatCard
+          label="System Logs"
+          value={
+            (stats.logStats?.totalErrors ?? 0) === 0
+              ? "Healthy"
+              : `${stats.logStats?.totalErrors} error${stats.logStats?.totalErrors === 1 ? "" : "s"}`
+          }
+          sub={
+            (stats.logStats?.totalErrors ?? 0) === 0
+              ? `${stats.logStats?.totalWarnings ?? 0} warnings • Clean buffer`
+              : `${stats.logStats?.impactedUsersCount ?? 0} user${stats.logStats?.impactedUsersCount === 1 ? "" : "s"} impacted`
+          }
+          warn={(stats.logStats?.totalErrors ?? 0) > 0}
+          destructive={(stats.logStats?.totalErrors ?? 0) > 0}
+          Icon={Terminal}
+          color="#8b5cf6"
+          href="/logs"
         />
       </div>
 
@@ -322,6 +352,64 @@ export default function DashboardPage() {
 
         {/* Infrastructure & Operational Health */}
         <div className="flex flex-col gap-6">
+          {/* Recent System Alerts & Log Telemetry */}
+          <Card className="p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
+                  Recent System Alerts & Log Telemetry
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Live exceptions and failures buffered from API & Worker
+                </p>
+              </div>
+              {can("logs", "read") && (
+                <Link
+                  href="/logs"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  View all logs <ArrowUpRight size={13} />
+                </Link>
+              )}
+            </div>
+
+            {(!stats.logStats?.topErrors || stats.logStats.topErrors.length === 0) ? (
+              <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-emerald-500/30 bg-emerald-500/5 p-4">
+                <Badge variant="success">Zero Active Errors</Badge>
+                <p className="text-xs text-muted-foreground text-center">
+                  All services and background workers are operating normally with no errors in the buffer.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                {stats.logStats.topErrors.map((err, idx) => (
+                  <Link
+                    key={`${err.message}-${idx}`}
+                    href={`/logs?q=${encodeURIComponent(err.message.slice(0, 40))}&level=error`}
+                    className="block rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-xs hover:bg-destructive/10 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2 font-medium">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-destructive/15 text-destructive">
+                          x{err.count}
+                        </span>
+                        <span className="font-mono text-muted-foreground uppercase text-[10px]">
+                          {err.service}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-mono shrink-0">
+                        {formatTimeAgo(err.lastSeen)}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-mono text-destructive truncate font-semibold" title={err.message}>
+                      {err.message}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+
           {/* Failing Sources Alert Box */}
           <Card className="p-6 flex-1">
             <div className="mb-4 flex items-center justify-between">
@@ -370,7 +458,7 @@ export default function DashboardPage() {
                 Infrastructure Consoles
               </h3>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <Link
                 href="/cache"
                 className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/30 p-3 text-center transition-all hover:bg-muted/70 hover:shadow-sm"
@@ -384,6 +472,20 @@ export default function DashboardPage() {
               >
                 <Layers size={18} className="text-indigo-500" />
                 <span className="text-xs font-medium">Queues</span>
+              </Link>
+              <Link
+                href="/logs"
+                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-muted/30 p-3 text-center transition-all hover:bg-muted/70 hover:shadow-sm relative group"
+              >
+                <div className="relative">
+                  <Terminal size={18} className="text-purple-500" />
+                  {(stats.logStats?.totalErrors ?? 0) > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                      {stats.logStats?.totalErrors}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs font-medium">Logs</span>
               </Link>
               <Link
                 href="/sources"
@@ -413,30 +515,41 @@ function StatCard({
   sub,
   Icon,
   warn,
+  destructive,
   trend,
   color = "#3b82f6",
+  href,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   Icon: React.ComponentType<{ size?: number; className?: string }>;
   warn?: boolean;
+  destructive?: boolean;
   trend?: DailyTrendPoint[];
   color?: string;
+  href?: string;
 }) {
   const gradientId = `sparkline-${label.replace(/\s+/g, "-").toLowerCase()}`;
 
-  return (
-    <Card className="flex flex-col justify-between p-5 transition-all hover:shadow-md">
+  const cardContent = (
+    <Card
+      className={cn(
+        "flex flex-col justify-between p-5 transition-all hover:shadow-md h-full",
+        href && "cursor-pointer group hover:border-primary/40",
+      )}
+    >
       <div>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
             {label}
           </span>
           <div
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-xl",
-              warn
+              "flex h-8 w-8 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
+              destructive
+                ? "bg-destructive/10 text-destructive"
+                : warn
                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                 : "bg-primary/10 text-primary",
             )}
@@ -447,7 +560,11 @@ function StatCard({
         <div
           className={cn(
             "mt-2 text-2xl font-bold tracking-tight",
-            warn ? "text-amber-600 dark:text-amber-400" : "text-foreground",
+            destructive
+              ? "text-destructive"
+              : warn
+              ? "text-amber-600 dark:text-amber-400"
+              : "text-foreground",
           )}
         >
           {value}
@@ -499,4 +616,14 @@ function StatCard({
       ) : null}
     </Card>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block h-full">
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return cardContent;
 }

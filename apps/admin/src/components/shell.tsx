@@ -20,6 +20,7 @@ import {
   Tag,
   Users,
   ShieldCheck,
+  Terminal,
   User as UserIcon,
   X,
 } from "lucide-react";
@@ -54,6 +55,7 @@ const ROUTE_NAMES: Record<string, string> = {
   jobs: "Jobs",
   roles: "Roles & Permissions",
   cache: "Cache Console",
+  logs: "System Logs",
   profile: "Profile & Security",
   "change-email": "Change Email",
 };
@@ -73,8 +75,10 @@ const NAV: Array<{
   { href: "/roles", label: "Roles", Icon: ShieldCheck, feature: "roles" },
   { href: "/jobs", label: "Jobs", Icon: Bookmark, feature: "jobs" },
   { href: "/cache", label: "Cache", Icon: Database, feature: "cache" },
+  { href: "/logs", label: "Logs", Icon: Terminal, feature: "logs" },
   { href: "/settings", label: "Settings", Icon: Settings, feature: "settings" },
 ];
+
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

@@ -18,6 +18,7 @@ export interface SyncRun {
   sourceId: string;
   sourceName?: string;
   sourceType?: SourceType;
+  jobId?: string | null;
   status: SyncStatus;
   itemsFound: number;
   itemsNew: number;

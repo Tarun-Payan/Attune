@@ -17,7 +17,7 @@ type CustomFeedItem = Omit<Parser.Item, "creator"> & {
 const parser = new Parser<Record<string, unknown>, CustomFeedItem>({
   timeout: 15_000,
   headers: {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 AttuneBot/0.2",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
   },
   customFields: {
@@ -178,7 +178,7 @@ export const rssConnector: Connector = {
       if (res.status === "rejected") {
         failed += 1;
         log.warn(
-          { url: feedConfig.url, name: feedConfig.name, reason: String(res.reason?.message ?? res.reason) },
+          { url: feedConfig.url, name: feedConfig.name, err: res.reason },
           "RSS feed fetch failed",
         );
         continue;
@@ -215,7 +215,11 @@ export const rssConnector: Connector = {
     }
 
     if (out.length === 0 && failed > 0) {
-      throw new Error(`All ${failed} RSS feed(s) failed to fetch`);
+      const reasons = results
+        .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+        .map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)))
+        .join("; ");
+      throw new Error(`All ${failed} RSS feed(s) failed to fetch: ${reasons}`);
     }
 
     return out;

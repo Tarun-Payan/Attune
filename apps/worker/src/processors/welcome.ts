@@ -3,9 +3,7 @@ import { welcomeEmailJobSchema } from "@attune/schemas";
 import { welcomeEmailHtml } from "../lib/emailTemplates";
 import { sendEmail } from "../lib/mailer";
 import { createNotificationLog } from "../repository";
-import { childLogger } from "../lib/logger";
-
-const log = childLogger({ component: "welcomeEmailProcessor" });
+import { createJobLogger, logger } from "../lib/logger";
 
 /**
  * Transactional Welcome Email processor: triggered upon new registration or OAuth signup.
@@ -13,11 +11,12 @@ const log = childLogger({ component: "welcomeEmailProcessor" });
 export async function welcomeEmailProcessor(job: Job) {
   const parsed = welcomeEmailJobSchema.safeParse(job.data);
   if (!parsed.success) {
-    log.warn({ errors: parsed.error.format() }, "invalid welcome email payload");
+    logger.warn({ jobId: job.id, errors: parsed.error.format() }, "invalid welcome email payload");
     return { ok: false, error: "Invalid job payload" };
   }
 
   const { userId, email, name } = parsed.data;
+  const jobLog = createJobLogger(logger, job, "pipeline");
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 
   const result = await sendEmail({
@@ -34,7 +33,6 @@ export async function welcomeEmailProcessor(job: Job) {
     error: result.error,
   });
 
-  log.info({ userId, email, ok: result.ok }, "welcome email processed");
+  jobLog.info({ userId, email, ok: result.ok }, "welcome email processed");
   return { ok: result.ok, error: result.error };
 }
-
