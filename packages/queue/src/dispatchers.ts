@@ -71,14 +71,13 @@ export async function enqueueNotifyItems(payload: NotifyItemsJobPayload, opts?: 
  * Enqueues repeatable categorize sweep job.
  */
 export async function enqueueCategorizeSweep(opts?: JobsOptions) {
-  return pipelineQueue.add(
-    JOB_NAMES.CATEGORIZE_SWEEP,
-    {},
+  return pipelineQueue.upsertJobScheduler(
+    "categorize-sweep",
+    { every: 5 * 60_000 },
     {
-      ...DEFAULT_JOB_OPTS,
-      repeat: { every: 5 * 60_000 },
-      jobId: "categorize-sweep",
-      ...opts,
+      name: JOB_NAMES.CATEGORIZE_SWEEP,
+      data: {},
+      opts: { ...DEFAULT_JOB_OPTS, ...opts },
     },
   );
 }
@@ -87,14 +86,13 @@ export async function enqueueCategorizeSweep(opts?: JobsOptions) {
  * Enqueues repeatable AI summarizer job.
  */
 export async function enqueueSummarize(opts?: JobsOptions) {
-  return pipelineQueue.add(
-    JOB_NAMES.SUMMARIZE,
-    {},
+  return pipelineQueue.upsertJobScheduler(
+    "summarize",
+    { every: 10 * 60_000 },
     {
-      ...DEFAULT_JOB_OPTS,
-      repeat: { every: 10 * 60_000 },
-      jobId: "summarize",
-      ...opts,
+      name: JOB_NAMES.SUMMARIZE,
+      data: {},
+      opts: { ...DEFAULT_JOB_OPTS, ...opts },
     },
   );
 }
@@ -103,14 +101,13 @@ export async function enqueueSummarize(opts?: JobsOptions) {
  * Enqueues repeatable AI clustering job.
  */
 export async function enqueueCluster(opts?: JobsOptions) {
-  return pipelineQueue.add(
-    JOB_NAMES.CLUSTER,
-    {},
+  return pipelineQueue.upsertJobScheduler(
+    "cluster",
+    { every: 60 * 60_000 },
     {
-      ...DEFAULT_JOB_OPTS,
-      repeat: { every: 60 * 60_000 },
-      jobId: "cluster",
-      ...opts,
+      name: JOB_NAMES.CLUSTER,
+      data: {},
+      opts: { ...DEFAULT_JOB_OPTS, ...opts },
     },
   );
 }
@@ -119,14 +116,13 @@ export async function enqueueCluster(opts?: JobsOptions) {
  * Enqueues repeatable system heartbeat job.
  */
 export async function enqueueHeartbeat(heartbeatMs = 60_000, opts?: JobsOptions) {
-  return systemQueue.add(
-    JOB_NAMES.HEARTBEAT,
-    {},
+  return systemQueue.upsertJobScheduler(
+    "heartbeat",
+    { every: heartbeatMs },
     {
-      ...HEARTBEAT_JOB_OPTS,
-      repeat: { every: heartbeatMs },
-      jobId: "heartbeat",
-      ...opts,
+      name: JOB_NAMES.HEARTBEAT,
+      data: {},
+      opts: { ...HEARTBEAT_JOB_OPTS, ...opts },
     },
   );
 }

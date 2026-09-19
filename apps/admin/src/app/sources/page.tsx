@@ -7,6 +7,7 @@ import { SOURCE_TYPES, type Source } from "@attune/types";
 import { sourceCreateSchema, sourcePatchSchema } from "@attune/schemas";
 import { api } from "@/lib/api";
 import { AccessDenied, usePermissions } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
 import {
   Badge,
   Button,
@@ -22,6 +23,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Spinner,
   Td,
   Textarea,
   Th,
@@ -44,6 +46,9 @@ export default function SourcesPage() {
   const { can, loading: permsLoading } = usePermissions();
   const [sources, setSources] = useState<Source[] | null>(null);
   const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkSyncing, setIsBulkSyncing] = useState(false);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<Source | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
@@ -123,6 +128,73 @@ export default function SourcesPage() {
     load();
   };
 
+  const toggleSelectSource = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const isAllPageSelected =
+    pageSources.length > 0 && pageSources.every((s) => selectedIds.has(s.id));
+  const isSomePageSelected =
+    pageSources.some((s) => selectedIds.has(s.id)) && !isAllPageSelected;
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (isAllPageSelected) {
+        pageSources.forEach((s) => next.delete(s.id));
+      } else {
+        pageSources.forEach((s) => next.add(s.id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const bulkSync = async () => {
+    if (selectedIds.size === 0) return;
+    setIsBulkSyncing(true);
+    setFlash(`Queueing sync for ${selectedIds.size} source${selectedIds.size === 1 ? "" : "s"}…`);
+
+    const ids = Array.from(selectedIds);
+    const results = await Promise.allSettled(ids.map((id) => api.sources.run(id)));
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    if (failed === 0) {
+      setFlash(`Successfully queued sync for all ${succeeded} selected source${succeeded === 1 ? "" : "s"}!`);
+    } else {
+      setFlash(`Queued ${succeeded} syncs, ${failed} failed.`);
+    }
+
+    setIsBulkSyncing(false);
+    clearSelection();
+    setTimeout(() => setFlash(null), 4000);
+  };
+
+  const bulkToggleEnabled = async (enable: boolean) => {
+    if (selectedIds.size === 0) return;
+    setIsBulkUpdating(true);
+    setFlash(`${enable ? "Enabling" : "Disabling"} ${selectedIds.size} source${selectedIds.size === 1 ? "" : "s"}…`);
+
+    const ids = Array.from(selectedIds);
+    await Promise.allSettled(ids.map((id) => api.sources.patch(id, { enabled: enable })));
+
+    setFlash(`Successfully ${enable ? "enabled" : "disabled"} ${ids.length} source${ids.length === 1 ? "" : "s"}.`);
+    setIsBulkUpdating(false);
+    clearSelection();
+    load();
+    setTimeout(() => setFlash(null), 3000);
+  };
+
   if (!permsLoading && !can("sources", "read")) {
     return <AccessDenied feature="Sources" />;
   }
@@ -171,11 +243,85 @@ export default function SourcesPage() {
         />
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/25 bg-primary/5 p-3 px-4 text-sm text-foreground animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-2.5 font-medium">
+            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
+              {selectedIds.size}
+            </span>
+            <span>source{selectedIds.size === 1 ? "" : "s"} selected</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {can("sources", "write") && (
+              <Button
+                size="sm"
+                onClick={bulkSync}
+                disabled={isBulkSyncing || isBulkUpdating}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+              >
+                {isBulkSyncing ? (
+                  <>
+                    <Spinner className="mr-1.5 h-3.5 w-3.5" /> Queueing syncs…
+                  </>
+                ) : (
+                  <>
+                    <Play size={13} className="mr-1.5 fill-current" /> Sync Selected ({selectedIds.size})
+                  </>
+                )}
+              </Button>
+            )}
+            {can("sources", "update") && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkToggleEnabled(true)}
+                  disabled={isBulkSyncing || isBulkUpdating}
+                  className="cursor-pointer"
+                >
+                  Enable
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bulkToggleEnabled(false)}
+                  disabled={isBulkSyncing || isBulkUpdating}
+                  className="cursor-pointer"
+                >
+                  Disable
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSelection}
+              disabled={isBulkSyncing || isBulkUpdating}
+              className="text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              Deselect all
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-175">
             <thead className="border-b border-border bg-muted/30">
               <tr>
+                <Th className="w-10 px-3 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isSomePageSelected;
+                    }}
+                    onChange={toggleSelectAll}
+                    aria-label="Select all sources on this page"
+                    className="h-4 w-4 rounded border-border accent-primary cursor-pointer align-middle"
+                  />
+                </Th>
                 {isVisible("status") && <Th>Status</Th>}
                 {isVisible("name") && <Th>Name</Th>}
                 {isVisible("type") && <Th>Type</Th>}
@@ -186,9 +332,25 @@ export default function SourcesPage() {
             </thead>
             <tbody>
               {pageSources.map((s) => {
+                const isSelected = selectedIds.has(s.id);
                 const recent = s.lastSyncAt ? Date.now() - new Date(s.lastSyncAt).getTime() < 30 * 60_000 : false;
                 return (
-                  <tr key={s.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={s.id}
+                    className={cn(
+                      "border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors",
+                      isSelected && "bg-primary/5 hover:bg-primary/10",
+                    )}
+                  >
+                    <Td className="w-10 px-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectSource(s.id)}
+                        aria-label={`Select ${s.name}`}
+                        className="h-4 w-4 rounded border-border accent-primary cursor-pointer align-middle"
+                      />
+                    </Td>
                     {isVisible("status") && (
                       <Td>
                         {s.enabled ? (
@@ -267,7 +429,7 @@ export default function SourcesPage() {
               })}
               {pageSources.length === 0 ? (
                 <tr>
-                  <Td colSpan={visibleCount} className="py-8 text-center text-muted-foreground">No sources found.</Td>
+                  <Td colSpan={visibleCount + 1} className="py-8 text-center text-muted-foreground">No sources found.</Td>
                 </tr>
               ) : null}
             </tbody>

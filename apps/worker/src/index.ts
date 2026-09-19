@@ -18,10 +18,10 @@ const log = childLogger({ component: "worker" });
 
 // ── Queue: system — heartbeat proving scheduler + Redis work ──────────────
 const HEARTBEAT_MS = Number(process.env.HEARTBEAT_MS ?? 60_000);
-await systemQueue.add(
+await systemQueue.upsertJobScheduler(
   "heartbeat",
-  {},
-  { repeat: { every: HEARTBEAT_MS }, jobId: "heartbeat", removeOnComplete: 100, removeOnFail: 500 },
+  { every: HEARTBEAT_MS },
+  { name: "heartbeat", data: {}, opts: { removeOnComplete: 100, removeOnFail: 500 } },
 );
 
 // ── Queue: ingest — per-source sync jobs (cron) + manual/admin triggers ───

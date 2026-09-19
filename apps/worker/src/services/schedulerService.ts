@@ -27,13 +27,17 @@ export async function registerSchedules(): Promise<ScheduleStats> {
   for (const source of allSources) {
     const every = INTERVAL_BY_TYPE[source.type];
     if (!every || !hasConnector(source.type) || !source.enabled) continue;
-    const jobId = `sync-${source.id}`;
-    await ingestQueue.add(
-      "sync",
-      { sourceId: source.id },
-      { ...JOB_OPTS, repeat: { every }, jobId },
+    const schedulerId = `sync-${source.id}`;
+    await ingestQueue.upsertJobScheduler(
+      schedulerId,
+      { every },
+      {
+        name: "sync",
+        data: { sourceId: source.id },
+        opts: { ...JOB_OPTS },
+      },
     );
-    wantedSources.add(jobId);
+    wantedSources.add(schedulerId);
 
     // First-run backfill: sources that have never synced get an immediate one-off
     if (!source.lastSyncAt) {
@@ -49,28 +53,27 @@ export async function registerSchedules(): Promise<ScheduleStats> {
   // Remove repeatables for sources that no longer exist / are disabled (e.g. tripped breaker)
   const existing = await ingestQueue.getJobSchedulers();
   for (const s of existing) {
-    const id = s.id ?? s.key;
-    if (id && !wantedSources.has(id)) {
+    if (s.key && !wantedSources.has(s.key)) {
       await ingestQueue.removeJobScheduler(s.key);
     }
   }
 
-  await pipelineQueue.add(
+  await pipelineQueue.upsertJobScheduler(
     "categorize-sweep",
-    {},
-    { ...JOB_OPTS, repeat: { every: 5 * 60_000 }, jobId: "categorize-sweep" },
+    { every: 5 * 60_000 },
+    { name: "categorize-sweep", data: {}, opts: { ...JOB_OPTS } },
   );
 
   // AI enrichment: summaries every 10 min (budget-capped), clustering hourly
-  await pipelineQueue.add(
+  await pipelineQueue.upsertJobScheduler(
     "summarize",
-    {},
-    { ...JOB_OPTS, repeat: { every: 10 * 60_000 }, jobId: "summarize" },
+    { every: 10 * 60_000 },
+    { name: "summarize", data: {}, opts: { ...JOB_OPTS } },
   );
-  await pipelineQueue.add(
+  await pipelineQueue.upsertJobScheduler(
     "cluster",
-    {},
-    { ...JOB_OPTS, repeat: { every: 60 * 60_000 }, jobId: "cluster" },
+    { every: 60 * 60_000 },
+    { name: "cluster", data: {}, opts: { ...JOB_OPTS } },
   );
 
   return { scheduled: wantedSources.size, backfilled, totalSources: allSources.length };
