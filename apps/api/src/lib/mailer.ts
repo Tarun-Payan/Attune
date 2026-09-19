@@ -8,14 +8,29 @@ let transporter: Transporter | null = null;
 function getTransporter(): Transporter {
   if (transporter) return transporter;
 
+  const host = process.env.SMTP_HOST ?? "localhost";
+  const port = Number(process.env.SMTP_PORT ?? 1025);
+  const secure =
+    process.env.SMTP_SECURE !== undefined
+      ? process.env.SMTP_SECURE === "true"
+      : port === 465;
+
+  if (process.env.NODE_ENV === "production" && !process.env.SMTP_HOST) {
+    log.warn(
+      { host, port },
+      "SMTP_HOST is not configured in production; defaulting to localhost which will likely cause connection timeouts",
+    );
+  }
+
   transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST ?? "localhost",
-    port: Number(process.env.SMTP_PORT ?? 1025),
-    secure: Number(process.env.SMTP_PORT ?? 1025) === 465,
+    host,
+    port,
+    secure,
     auth:
       process.env.SMTP_USER && process.env.SMTP_PASS
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         : undefined,
+    connectionTimeout: Number(process.env.SMTP_TIMEOUT_MS ?? 15000),
   });
 
   return transporter;
@@ -28,6 +43,8 @@ export async function sendEmail(input: {
   text?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const from = process.env.MAIL_FROM ?? "Attune <no-reply@attune.local>";
+  const host = process.env.SMTP_HOST ?? "localhost";
+  const port = Number(process.env.SMTP_PORT ?? 1025);
 
   try {
     const info = await getTransporter().sendMail({
@@ -41,7 +58,7 @@ export async function sendEmail(input: {
     return { ok: true };
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    log.warn({ to: input.to, err }, "Failed to send email");
+    log.warn({ to: input.to, host, port, err }, "Failed to send email");
     return { ok: false, error };
   }
 }

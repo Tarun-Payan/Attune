@@ -20,7 +20,7 @@ export const campaignSchema = z.object({
   body: z.string().min(1, "Body is required").max(500, "Body is too long"),
   channel: z.enum(NOTIFICATION_CHANNELS),
   topicKey: z.string().max(60).optional(),
-  userIds: z.array(z.string().uuid()).optional(),
+  userIds: z.array(z.string().min(1, "User ID cannot be empty")).optional(),
 });
 
 export const campaignsQuerySchema = z.object({

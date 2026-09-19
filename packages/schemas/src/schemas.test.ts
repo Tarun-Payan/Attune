@@ -191,5 +191,16 @@ describe("jobSchemas", () => {
     ).toBe(true);
     expect(campaignJobSchema.safeParse({ title: "", body: "Body", channel: "email" }).success).toBe(false);
   });
+
+  it("accepts CUID2 and alphanumeric userIds in campaignSchema", () => {
+    const cuid = "clxhq892h000008l07b6q0a9x";
+    const res = campaignJobSchema.safeParse({
+      title: "Targeted Announcement",
+      body: "Hello specific user",
+      channel: "email",
+      userIds: [cuid],
+    });
+    expect(res.success).toBe(true);
+  });
 });
 
