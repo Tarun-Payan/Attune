@@ -25,6 +25,12 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-attune.up.railway.app"
       }
+    },
+    "development-ios-simulator": {
+      "developmentClient": true,
+      "ios": {
+        "simulator": true
+      }
     }
   },
   "submit": {
